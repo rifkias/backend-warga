@@ -17,5 +17,5 @@ use Illuminate\Support\Facades\Route;
 //     return view('welcome');
 // });
 Route::get('/',function(){
-    return response("Welcome",200)->header('Content-Type', 'text/plain');
+    return response("Welcome Sistem Warga",200)->header('Content-Type', 'text/plain');
 });
