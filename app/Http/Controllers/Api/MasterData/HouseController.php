@@ -14,19 +14,19 @@ class HouseController extends Controller
     {
         $data = House::with(['wilayah']);
         $per_page = 10;
-        if($request->has("per_page")){
+        if($request->filled("per_page")){
             $per_page = $request->per_page;
         }
         if($request->sort_field && $request->sort_type){
             $data = $data->orderBy($request->sort_field,$request->sort_type);
         }
-        if($request->has('house_no')){
+        if($request->filled('house_no')){
             $data =  $data->where("house_no","LIKE","%".$request->house_no."%");
         }
-        if($request->has('jalan')){
+        if($request->filled('jalan')){
             $data =  $data->where("jalan","LIKE","%".$request->jalan."%");
         }
-        if($request->has('wilayah_id')){
+        if($request->filled('wilayah_id')){
             $data =  $data->where("wilayah_id",$request->wilayah_id);
         }
         $data = $data->paginate($per_page);

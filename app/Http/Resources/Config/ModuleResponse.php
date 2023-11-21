@@ -16,8 +16,8 @@ class ModuleResponse extends JsonResource
     {
         return [
             'id'=>$this->id,
-            'name'=>$this->module_name,
-            "description"=>$this->module_desc,
+            'module_name'=>$this->module_name,
+            "module_desc"=>$this->module_desc,
         ];
     }
 }

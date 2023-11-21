@@ -16,8 +16,8 @@ class RuleResponse extends JsonResource
     {
         return [
             'id'=>$this->id,
-            'name'=>$this->role_name,
-            "description"=>$this->role_desc,
+            'role_name'=>$this->role_name,
+            "role_desc"=>$this->role_desc,
         ];
     }
 }

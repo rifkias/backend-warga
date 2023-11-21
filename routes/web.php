@@ -18,4 +18,8 @@ use Illuminate\Support\Facades\Route;
 // });
 Route::get('/',function(){
     return response("Welcome Sistem Warga",200)->header('Content-Type', 'text/plain');
+})->name("basePath");
+Route::fallback(function(){
+    return response()->json([
+        'message' => 'Page Not Found'], 404);
 });

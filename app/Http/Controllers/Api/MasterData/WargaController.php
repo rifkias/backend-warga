@@ -14,31 +14,31 @@ class WargaController extends Controller
     {
         $data = Warga::with(["house","house.wilayah"]);
         $per_page = 10;
-        if($request->has("per_page")){
+        if($request->filled("per_page")){
             $per_page = $request->per_page;
         }
         if($request->sort_field && $request->sort_type){
             $data = $data->orderBy($request->sort_field,$request->sort_type);
         }
-        if($request->has('nik')){
+        if($request->filled('nik')){
             $data =  $data->where("nik","LIKE","%".$request->nik."%");
         }
-        if($request->has('kk_number')){
+        if($request->filled('kk_number')){
             $data =  $data->where("kk_number","LIKE","%".$request->kk_number."%");
         }
-        if($request->has('name')){
+        if($request->filled('name')){
             $data =  $data->where("name","LIKE","%".$request->name."%");
         }
-        if($request->has('gender')){
+        if($request->filled('gender')){
             $data =  $data->where("gender","LIKE","%".$request->gender."%");
         }
-        if($request->has('birth_place')){
+        if($request->filled('birth_place')){
             $data =  $data->where("birth_place","LIKE","%".$request->birth_place."%");
         }
-        if($request->has('religion')){
+        if($request->filled('religion')){
             $data =  $data->where("religion","LIKE","%".$request->religion."%");
         }
-        if($request->has("trash")){
+        if($request->filled("trash")){
             if($request->trash){
                 $data = $data->onlyTrashed();
             }

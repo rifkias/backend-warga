@@ -8,6 +8,8 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use App\Models\Config\Rule;
+use App\Models\Config\RolePermission;
+
 class User extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
@@ -21,6 +23,7 @@ class User extends Authenticatable
         'name',
         'email',
         'role_id',
+        'user_group_id',
         'password',
     ];
 
@@ -45,6 +48,10 @@ class User extends Authenticatable
 
     public function roles()
     {
-        return $this->hasOne(Rule::class,'id','role_id');
+        return $this->hasOne(Rule::class, 'id', 'role_id');
+    }
+    public function permision_role()
+    {
+        return $this->hasMany(RolePermission::class, 'role_id', 'role_id');
     }
 }

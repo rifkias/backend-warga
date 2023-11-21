@@ -4,23 +4,32 @@ namespace App\Http\Controllers\Api\Config;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\Config\Module;
-use App\Http\Resources\Config\ModuleResponse;
-use App\Http\Requests\Config\ModuleRequest;
+use App\Http\Resources\Config\UserGroupResponse;
+use App\Http\Requests\Config\UserGroupRequest;
+use App\Models\Config\UserGroup;
+use Illuminate\Support\Facades\Log;
+
 use App\Http\Controllers\ApiLogController as ApiLog;
 
-class ModuleController extends Controller
+class UserGroupController extends Controller
 {
     protected $apiLog;
     public function __construct()
     {
         $this->apiLog           = new ApiLog;
     }
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function index(Request $request)
     {
-        $checkPermission    = $this->apiLog->checkPermission('ModuleController', 'pread');
-        if ($checkPermission) {
-            $data = Module::query();
+        $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pread');
+        if($checkPermission){
+            // $data = UserGroup::with(['parent']);
+            $data = UserGroup::leftJoin('user_group as parent', 'user_group.parent_id','=','parent.id')
+            ->select("user_group.*",'parent.group_code as parent_code','parent.group_desc as parent_desc', 'parent.parent_id as parent_parent_id');
             $per_page = 10;
             if ($request->filled("per_page")) {
                 $per_page = $request->per_page;
@@ -28,14 +37,24 @@ class ModuleController extends Controller
             if ($request->sort_field && $request->sort_type) {
                 $data = $data->orderBy($request->sort_field, $request->sort_type);
             }
-            if ($request->filled('module_name')) {
-                $data =  $data->where("module_name", "LIKE", "%" . $request->module_name . "%");
+            if ($request->filled("group_code")) {
+                $data = $data->where("user_group.group_code",'LIKE', '%'.$request->group_code.'%');
             }
-            if ($request->filled('module_desc')) {
-                $data =  $data->where("module_desc", "LIKE", "%" . $request->module_desc . "%");
+            if ($request->filled("group_desc")) {
+                $data = $data->where("user_group.group_desc",'LIKE', '%'.$request->group_desc . '%');
+            }
+            if ($request->filled("parent_desc")) {
+                $data = $data->whereHas('parent', function ($q) use ($request) {
+                    return $q->where(
+                        "group_desc",
+                        "LIKE",
+                        "%" . $request->parent_desc . "%"
+                    );
+                });
             }
             $data = $data->paginate($per_page);
-            return (ModuleResponse::collection($data))
+            // return $data;
+            return (UserGroupResponse::collection($data))
                 ->response()
                 ->setStatusCode(200);
         } else {
@@ -43,24 +62,23 @@ class ModuleController extends Controller
                 'error' => 'Forbidden access'
             ], 403);
         }
+
     }
+
     /**
      * Store a newly created resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(ModuleRequest $request)
+    public function store(UserGroupRequest $request)
     {
-        $checkPermission    = $this->apiLog->checkPermission('ModuleController', 'pcreate');
+        $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pcreate');
         if ($checkPermission) {
             $validate = $request->validated();
 
-            $data = Module::create([
-                'module_name' => $request->module_name,
-                'module_desc' => $request->module_desc,
-            ]);
-            return (new ModuleResponse($data))
+            $data = UserGroup::create($validate);
+            return (new UserGroupResponse($data))
                 ->response()
                 ->setStatusCode(201);
         } else {
@@ -78,10 +96,12 @@ class ModuleController extends Controller
      */
     public function show($id)
     {
-        $checkPermission    = $this->apiLog->checkPermission('ModuleController', 'pread');
+        $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pread');
         if ($checkPermission) {
-            $data = Module::findOrFail($id);
-            return (new ModuleResponse($data))
+            $data = UserGroup::with(['parent'])->findOrFail($id);
+            $tree = $this->treeStructure($data->descendants_and_self());
+            return $tree;
+            return (new UserGroupResponse($data))
                 ->response()
                 ->setStatusCode(200);
         } else {
@@ -98,15 +118,15 @@ class ModuleController extends Controller
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(ModuleRequest $request, $id)
+    public function update(UserGroupRequest $request, $id)
     {
-        $checkPermission    = $this->apiLog->checkPermission('ModuleController', 'pupdate');
+        $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pupdate');
         if ($checkPermission) {
             $validate = $request->validated();
 
-            $data = Module::findOrFail($id);
+            $data = UserGroup::findOrFail($id);
             if ($data->update($validate)) {
-                return (new ModuleResponse($data))
+                return (new UserGroupResponse($data))
                     ->response()
                     ->setStatusCode(200);
             }
@@ -125,11 +145,11 @@ class ModuleController extends Controller
      */
     public function destroy($id)
     {
-        $checkPermission    = $this->apiLog->checkPermission('ModuleController', 'pdelete');
+        $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pdelete');
         if ($checkPermission) {
-            $data = Module::findOrFail($id);
+            $data = UserGroup::findOrFail($id);
             if ($data->delete()) {
-                return (new ModuleResponse($data))
+                return (new UserGroupResponse($data))
                     ->response()
                     ->setStatusCode(200);
             }
@@ -138,5 +158,8 @@ class ModuleController extends Controller
                 'error' => 'Forbidden access'
             ], 403);
         }
+    }
+    function treeStructure($data) {
+        return $data;
     }
 }

@@ -9,21 +9,55 @@ use App\Http\Resources\Admin\UserResource;
 use App\Http\Requests\Admin\UserRequest;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use App\Http\Controllers\ApiLogController as ApiLog;
 
-use Auth;
+use Auth,Log;
+
 class UserController extends Controller
 {
+    protected $apiLog;
+    public function __construct()
+    {
+        $this->apiLog           = new ApiLog;
+    }
     /**
      * Display a listing of the resource.
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $data = User::with(['roles','roles.permission'])->orderBy('id','DESC')->paginate(10);
-        return (UserResource::collection($data))
+        $checkPermission    = $this->apiLog->checkPermission('UserController', 'pread');
+        if ($checkPermission) {
+            $data = User::with(['roles']);
+            $per_page = 10;
+            if ($request->filled("per_page")) {
+                $per_page = $request->per_page;
+            }
+            if ($request->filled("name")) {
+                $data = $data->where("name", "LIKE", "%" . $request->name . "%");
+            }
+            if ($request->filled("email")) {
+                $data = $data->where("email", "LIKE", "%" . $request->email . "%");
+            }
+            if ($request->filled("role_desc")) {
+                $data = $data->whereHas('roles', function ($q) use ($request) {
+                    $q->where("role_desc", "LIKE", "%" . $request->role_desc . "%");
+                });
+            }
+            if ($request->sort_field && $request->sort_type) {
+                $data = $data->orderBy($request->sort_field, $request->sort_type);
+            }
+            $data = $data->paginate($per_page);
+
+            return (UserResource::collection($data))
                 ->response()
                 ->setStatusCode(200);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -34,17 +68,24 @@ class UserController extends Controller
      */
     public function store(UserRequest $request)
     {
-        $validate = $request->validated();
+        $checkPermission    = $this->apiLog->checkPermission('UserController', 'pcreate');
+        if ($checkPermission) {
+            $validate = $request->validated();
 
-        $data = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'role_id' => $request->role_id,
-            'password' => bcrypt($request->password)
-        ]);
-        return (New UserResource($data))
+            $data = User::create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'role_id' => $request->role_id,
+                'password' => bcrypt($request->password)
+            ]);
+            return (new UserResource($data))
                 ->response()
                 ->setStatusCode(201);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -55,10 +96,17 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $data = User::with(['roles','roles.permission'])->findOrFail($id);
-        return (New UserResource($data))
+        $checkPermission    = $this->apiLog->checkPermission('UserController', 'pread');
+        if ($checkPermission) {
+            $data = User::with(['roles', 'roles.permission'])->findOrFail($id);
+            return (new UserResource($data))
                 ->response()
                 ->setStatusCode(200);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -70,14 +118,25 @@ class UserController extends Controller
      */
     public function update(UserRequest $request, $id)
     {
-        $validate = $request->validated();
+        $checkPermission    = $this->apiLog->checkPermission('UserController', 'pupdate');
+        if ($checkPermission) {
+            $validate = $request->validated();
+            $data = User::findOrFail($id);
 
-        $data = User::findOrFail($id);
-        if($data->update($validate)){
-            return (New UserResource($data))
-                ->response()
-                ->setStatusCode(200);
+            // Hash Password Before Update
+            if($validate['password']){
+                $validate['password'] = bcrypt($validate['password']);
+            }
 
+            if ($data->update($validate)) {
+                return (new UserResource($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
         }
     }
 
@@ -89,20 +148,27 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
-        $data = User::findOrFail($id);
-        if($data->delete()){
-            return (New UserResource($data))
-                ->response()
-                ->setStatusCode(200);
+        $checkPermission    = $this->apiLog->checkPermission('UserController', 'pdelete');
+        if ($checkPermission) {
+            $data = User::findOrFail($id);
+            if ($data->delete()) {
+                return (new UserResource($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
         }
     }
-    public function assignPermission(Request $request,$id)
+    public function assignPermission(Request $request, $id)
     {
         // $user = Auth::user();
         // return $user;
 
         $validate = $request->validate([
-            'name'=>'required'
+            'name' => 'required'
         ]);
         $data = User::find($id);
         $permission = Permission::findByName($request->name);

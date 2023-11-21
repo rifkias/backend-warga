@@ -13,13 +13,13 @@ class ProvinceController extends Controller
     {
         $data = Province::with('city');
         $per_page = 10;
-        if($request->has("per_page")){
+        if($request->filled("per_page")){
             $per_page = $request->per_page;
         }
-        if($request->has('province_name')){
+        if($request->filled('province_name')){
             $data =  $data->where("province_name","LIKE","%".$request->province_name."%");
         }
-        if($request->has("sort_field") && $request->has("sort_type")){
+        if($request->filled("sort_field") && $request->filled("sort_type")){
             $data = $data->orderBy($request->sort_field,$request->sort_type);
         }
         $data = $data->paginate($per_page);

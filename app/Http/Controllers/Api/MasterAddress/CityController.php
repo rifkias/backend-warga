@@ -14,16 +14,16 @@ class CityController extends Controller
     {
         $data = City::with(['district','province']);
         $per_page = 10;
-        if($request->has("per_page")){
+        if($request->filled("per_page")){
             $per_page = $request->per_page;
         }
         if($request->sort_field && $request->sort_type){
             $data = $data->orderBy($request->sort_field,$request->sort_type);
         }
-        if($request->has('province_id')){
+        if($request->filled('province_id')){
             $data = $data->where("province_id",$request->province_id);
         }
-        if($request->has('city_name')){
+        if($request->filled('city_name')){
             $data =  $data->where("city_name","LIKE","%".$request->city_name."%");
         }
         $data = $data->paginate($per_page);

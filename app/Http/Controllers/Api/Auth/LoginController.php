@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\Admin\UserResource;
 use Illuminate\Http\Request;
 use App\Http\Requests\Auth\UserLoginRequest;
-
+use App\Models\Config\Rule;
 class LoginController extends Controller
 {
     /**
@@ -19,14 +19,17 @@ class LoginController extends Controller
     {
         $credentials = $request->validated();
         if ($this->CheckCredential($credentials)) {
-            $user = auth()->user();
+            $user = auth()->user()->load(['roles','roles.permission','roles.permission.module']);
+            // $roles = Rule::with('permission')->find(auth()->user()->role_id);
+            // $user = User::with(['roles','roles.permission','roles.permission.module'])->find(auth()->user()->id);
             return (new UserResource($user))->additional([
                 'token' => $user->createToken('myAppToken')->plainTextToken,
+                'expires_in' => config('sanctum.expiration'),
             ]);
         }
         return response()->json([
             'message' => 'Your credential does not match.',
-        ], 401);
+        ], 422);
     }
 
     public function CheckCredential($credentials)

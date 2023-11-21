@@ -7,29 +7,42 @@ use Illuminate\Http\Request;
 use App\Models\Config\Rule;
 use App\Http\Resources\Config\RuleResponse;
 use App\Http\Requests\Config\RuleRequest;
+use App\Http\Controllers\ApiLogController as ApiLog;
 
 class RuleController extends Controller
 {
+    protected $apiLog;
+    public function __construct()
+    {
+        $this->apiLog           = new ApiLog;
+    }
     public function index(Request $request)
     {
-        $data = Rule::query();
-        $per_page = 10;
-        if($request->has("per_page")){
-            $per_page = $request->per_page;
-        }
-        if($request->sort_field && $request->sort_type){
-            $data = $data->orderBy($request->sort_field,$request->sort_type);
-        }
-        if($request->has('role_name')){
-            $data =  $data->where("role_name","LIKE","%".$request->role_name."%");
-        }
-        if($request->has('role_desc')){
-            $data =  $data->where("role_desc","LIKE","%".$request->role_desc."%");
-        }
-        $data = $data->paginate($per_page);
-        return (RuleResponse::collection($data))
+        $checkPermission    = $this->apiLog->checkPermission('RuleController', 'pread');
+        if ($checkPermission) {
+            $data = Rule::query();
+            $per_page = 10;
+            if ($request->filled("per_page")) {
+                $per_page = $request->per_page;
+            }
+            if ($request->sort_field && $request->sort_type && $request->sort_type !== 'none') {
+                $data = $data->orderBy($request->sort_field, $request->sort_type);
+            }
+            if ($request->filled('role_name')) {
+                $data =  $data->where("role_name", "LIKE", "%" . $request->role_name . "%");
+            }
+            if ($request->filled('role_desc')) {
+                $data =  $data->where("role_desc", "LIKE", "%" . $request->role_desc . "%");
+            }
+            $data = $data->paginate($per_page);
+            return (RuleResponse::collection($data))
                 ->response()
                 ->setStatusCode(200);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
     /**
      * Store a newly created resource in storage.
@@ -39,15 +52,22 @@ class RuleController extends Controller
      */
     public function store(RuleRequest $request)
     {
-        $validate = $request->validated();
+        $checkPermission    = $this->apiLog->checkPermission('RuleController', 'pcreate');
+        if ($checkPermission) {
+            $validate = $request->validated();
 
-        $data = Rule::create([
-            'role_name'=>$request->role_name,
-            'role_desc' => $request->role_desc,
-        ]);
-        return (New RuleResponse($data))
+            $data = Rule::create([
+                'role_name' => $request->role_name,
+                'role_desc' => $request->role_desc,
+            ]);
+            return (new RuleResponse($data))
                 ->response()
                 ->setStatusCode(201);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -58,10 +78,17 @@ class RuleController extends Controller
      */
     public function show($id)
     {
-        $data = Rule::findOrFail($id);
-        return (New RuleResponse($data))
+        $checkPermission    = $this->apiLog->checkPermission('RuleController', 'pread');
+        if ($checkPermission) {
+            $data = Rule::findOrFail($id);
+            return (new RuleResponse($data))
                 ->response()
                 ->setStatusCode(200);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -73,14 +100,20 @@ class RuleController extends Controller
      */
     public function update(RuleRequest $request, $id)
     {
-        $validate = $request->validated();
+        $checkPermission    = $this->apiLog->checkPermission('RuleController', 'pupdate');
+        if ($checkPermission) {
+            $validate = $request->validated();
 
-        $data = Rule::findOrFail($id);
-        if($data->update($validate)){
-            return (New RuleResponse($data))
-                ->response()
-                ->setStatusCode(200);
-
+            $data = Rule::findOrFail($id);
+            if ($data->update($validate)) {
+                return (new RuleResponse($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
         }
     }
 
@@ -92,11 +125,18 @@ class RuleController extends Controller
      */
     public function destroy($id)
     {
-        $data = Rule::findOrFail($id);
-        if($data->delete()){
-            return (New RuleResponse($data))
-                ->response()
-                ->setStatusCode(200);
+        $checkPermission    = $this->apiLog->checkPermission('RuleController', 'pdelete');
+        if ($checkPermission) {
+            $data = Rule::findOrFail($id);
+            if ($data->delete()) {
+                return (new RuleResponse($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
         }
     }
 }

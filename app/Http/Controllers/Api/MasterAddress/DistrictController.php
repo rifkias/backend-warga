@@ -14,16 +14,16 @@ class DistrictController extends Controller
     {
         $data = District::with(['village','city']);
         $per_page = 10;
-        if($request->has("per_page")){
+        if($request->filled("per_page")){
             $per_page = $request->per_page;
         }
         if($request->sort_field && $request->sort_type){
             $data = $data->orderBy($request->sort_field,$request->sort_type);
         }
-        if($request->has('city_id')){
+        if($request->filled('city_id')){
             $data = $data->where("city_id",$request->city_id);
         }
-        if($request->has('district_name')){
+        if($request->filled('district_name')){
             $data =  $data->where("district_name","LIKE","%".$request->district_name."%");
         }
         $data = $data->paginate($per_page);

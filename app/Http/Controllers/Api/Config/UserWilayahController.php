@@ -7,29 +7,42 @@ use Illuminate\Http\Request;
 use App\Models\Config\UserWilayah;
 use App\Http\Resources\Config\UserWilayahResponse;
 use App\Http\Requests\Config\UserWilayahRequest;
+use App\Http\Controllers\ApiLogController as ApiLog;
 
 class UserWilayahController extends Controller
 {
+    protected $apiLog;
+    public function __construct()
+    {
+        $this->apiLog           = new ApiLog;
+    }
     public function index(Request $request)
     {
-        $data = UserWilayah::with(['user','wilayah']);
-        $per_page = 10;
-        if($request->has("per_page")){
-            $per_page = $request->per_page;
-        }
-        if($request->sort_field && $request->sort_type){
-            $data = $data->orderBy($request->sort_field,$request->sort_type);
-        }
-        if($request->has("user_id")){
-            $data = $data->where("user_id",$request->user_id);
-        }
-        if($request->has("wilayah_id")){
-            $data = $data->where("wilayah_id",$request->wilayah_id);
-        }
-        $data = $data->paginate($per_page);
-        return (UserWilayahResponse::collection($data))
+        $checkPermission    = $this->apiLog->checkPermission('UserWilayahController', 'pread');
+        if ($checkPermission) {
+            $data = UserWilayah::with(['user', 'wilayah']);
+            $per_page = 10;
+            if ($request->filled("per_page")) {
+                $per_page = $request->per_page;
+            }
+            if ($request->sort_field && $request->sort_type) {
+                $data = $data->orderBy($request->sort_field, $request->sort_type);
+            }
+            if ($request->filled("user_id")) {
+                $data = $data->where("user_id", $request->user_id);
+            }
+            if ($request->filled("wilayah_id")) {
+                $data = $data->where("wilayah_id", $request->wilayah_id);
+            }
+            $data = $data->paginate($per_page);
+            return (UserWilayahResponse::collection($data))
                 ->response()
                 ->setStatusCode(200);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
     /**
      * Store a newly created resource in storage.
@@ -39,12 +52,19 @@ class UserWilayahController extends Controller
      */
     public function store(UserWilayahRequest $request)
     {
-        $validate = $request->validated();
+        $checkPermission    = $this->apiLog->checkPermission('UserWilayahController', 'pcreate');
+        if ($checkPermission) {
+            $validate = $request->validated();
 
-        $data = UserWilayah::create($validate);
-        return (New UserWilayahResponse($data))
+            $data = UserWilayah::create($validate);
+            return (new UserWilayahResponse($data))
                 ->response()
                 ->setStatusCode(201);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -55,10 +75,17 @@ class UserWilayahController extends Controller
      */
     public function show($id)
     {
-        $data = UserWilayah::with(['wilayah','user'])->findOrFail($id);
-        return (New UserWilayahResponse($data))
+        $checkPermission    = $this->apiLog->checkPermission('UserWilayahController', 'pread');
+        if ($checkPermission) {
+            $data = UserWilayah::with(['wilayah', 'user'])->findOrFail($id);
+            return (new UserWilayahResponse($data))
                 ->response()
                 ->setStatusCode(200);
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
+        }
     }
 
     /**
@@ -70,14 +97,20 @@ class UserWilayahController extends Controller
      */
     public function update(UserWilayahRequest $request, $id)
     {
-        $validate = $request->validated();
+        $checkPermission    = $this->apiLog->checkPermission('UserWilayahController', 'pupdate');
+        if ($checkPermission) {
+            $validate = $request->validated();
 
-        $data = UserWilayah::with(['wilayah','user'])->findOrFail($id);
-        if($data->update($validate)){
-            return (New UserWilayahResponse($data))
-                ->response()
-                ->setStatusCode(200);
-
+            $data = UserWilayah::with(['wilayah', 'user'])->findOrFail($id);
+            if ($data->update($validate)) {
+                return (new UserWilayahResponse($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
         }
     }
 
@@ -89,11 +122,18 @@ class UserWilayahController extends Controller
      */
     public function destroy($id)
     {
-        $data = UserWilayah::with(['wilayah','user'])->findOrFail($id);
-        if($data->delete()){
-            return (New UserWilayahResponse($data))
-                ->response()
-                ->setStatusCode(200);
+        $checkPermission    = $this->apiLog->checkPermission('UserWilayahController', 'pdelete');
+        if ($checkPermission) {
+            $data = UserWilayah::with(['wilayah', 'user'])->findOrFail($id);
+            if ($data->delete()) {
+                return (new UserWilayahResponse($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
+        } else {
+            return response()->json([
+                'error' => 'Forbidden access'
+            ], 403);
         }
     }
 }

@@ -4,7 +4,7 @@ namespace App\Http\Requests\Config;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class RuleRequest extends FormRequest
+class UserGroupRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,15 +24,17 @@ class RuleRequest extends FormRequest
     public function rules()
     {
         $rules = [
-            'role_name'=>['required','string','unique:rules,role_name'],
-            'role_desc'=>['required','string'],
+            'group_code' => ['required', 'string', 'unique:user_group,group_code','max:45'],
+            'group_desc' => ['required','string',
+            'max:45'],
+            'parent_id'=> ["nullable","exists:user_group,id"],
         ];
-        if($this->isMethod('PUT') || $this->isMethod('PATCH')){
+        if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
             // $rules['name'] = ['required','string','unique:permissions,name,'.$this->id];
-            $rules['role_name'] = [
+            $rules['group_code'] = [
                 'required',
                 'string',
-                "unique:rules,role_name,".$this->role
+                "unique:user_group,group_code," . $this->user_group, 'max:45'
             ];
         }
         return $rules;

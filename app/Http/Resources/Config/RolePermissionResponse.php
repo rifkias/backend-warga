@@ -15,19 +15,23 @@ class RolePermissionResponse extends JsonResource
     public function toArray($request)
     {
         return [
-            'id'=>$this->id,
-            'module'=>$this->module,
-            'role'=>$this->role,
-            'pcreate'=>$this->pcreate,
-            'pread'=>$this->pread,
-            'pupdate'=>$this->pupdate,
-            'pdelete'=>$this->pdelete,
-            'pupload'=>$this->pupload,
-            'pcustom1'=>$this->pcustom1,
-            'pcustom2'=>$this->pcustom2,
-            'pcustom3'=>$this->pcustom3,
-            'pcustom4'=>$this->pcustom4,
-            'pcustom5'=>$this->pcustom5,
+            'id' => $this->id,
+            'module' => $this->module,
+            'role' => $this->role,
+            'pcreate' => $this->pcreate,
+            'pread' => $this->pread,
+            'pupdate' => $this->pupdate,
+            'pdelete' => $this->pdelete,
+            'pupload' => $this->pupload,
+            'pcustom1' => $this->pcustom1,
+            'pcustom2' => $this->pcustom2,
+            'pcustom3' => $this->pcustom3,
+            'pcustom4' => $this->pcustom4,
+            'pcustom5' => $this->pcustom5,
+            'module_name' => $this->module->module_name,
+            'module_desc' => $this->module->module_desc,
+            'role_name' => $this->role->role_name,
+            'role_desc' => $this->role->role_desc
         ];
     }
 }
