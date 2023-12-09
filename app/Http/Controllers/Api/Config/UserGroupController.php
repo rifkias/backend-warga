@@ -99,8 +99,6 @@ class UserGroupController extends Controller
         $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pread');
         if ($checkPermission) {
             $data = UserGroup::with(['parent'])->findOrFail($id);
-            $tree = $this->treeStructure($data->descendants_and_self());
-            return $tree;
             return (new UserGroupResponse($data))
                 ->response()
                 ->setStatusCode(200);
