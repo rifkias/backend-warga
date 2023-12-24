@@ -9,6 +9,11 @@ use App\Http\Resources\MasterData\WilayahResponse;
 use App\Http\Requests\MasterData\WilayahRequest;
 use App\Http\Controllers\ApiLogController as ApiLog;
 
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Writer\Xls;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+
 class WilayahController extends Controller
 {
     protected $apiLog;
@@ -22,6 +27,7 @@ class WilayahController extends Controller
         if ($checkPermission) {
             $data = Wilayah::query();
             $per_page = 10;
+            $download = $request->download;
             if ($request->filled("per_page")) {
                 $per_page = $request->per_page;
             }
@@ -55,10 +61,16 @@ class WilayahController extends Controller
             if ($request->filled('jalan')) {
                 $data =  $data->where("jalan", "LIKE", "%" . $request->jalan . "%");
             }
-            $data = $data->paginate($per_page);
-            return (WilayahResponse::collection($data))
-                ->response()
-                ->setStatusCode(200);
+
+            if ($download == "download") {
+                $response    = $data->get();
+                return $this->downloadData($response);
+            } else {
+                $data = $data->paginate($per_page);
+                return (WilayahResponse::collection($data))
+                    ->response()
+                    ->setStatusCode(200);
+            }
         } else {
             return response()->json([
                 'error' => 'Forbidden access'
@@ -156,6 +168,60 @@ class WilayahController extends Controller
             return response()->json([
                 'error' => 'Forbidden access'
             ], 403);
+        }
+    }
+
+    private function downloadData($datas)
+    {
+        set_time_limit(0);
+        error_reporting(0);
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 0);
+
+        $name           = uniqid() . ".xlsx";
+        $file_path      = storage_path('download') . '/' . $name;
+        $spreadsheet    = new Spreadsheet();
+        $sheet          = $spreadsheet->getActiveSheet();
+        $sheet->setCellValue('A1', 'RT');
+        $sheet->setCellValue('B1', 'RW');
+        $sheet->setCellValue('C1', 'Kecamatan');
+        $sheet->setCellValue('D1', 'Kelurahan');
+        $sheet->setCellValue('E1', 'Kabupaten');
+        $sheet->setCellValue('F1', 'Provinsi');
+        $sheet->setCellValue('G1', 'Kode Pos');
+        $sheet->setCellValue('H1', 'Created At');
+        $sheet->setCellValue('I1', 'Updated At');
+        $sheet->getStyle('A1:I1')->getFont()->setBold(true);
+        $x  = 2;
+        if (count($datas) > 0) {
+            foreach ($datas as $data) {
+                $sheet->setCellValue('A' . $x, @$data->rt);
+                $sheet->setCellValue('B' . $x, @$data->rw);
+                $sheet->setCellValue('C' . $x, @$data->kecamatan);
+                $sheet->setCellValue('D' . $x, @$data->kelurahan);
+                $sheet->setCellValue('E' . $x, @$data->kabupaten);
+                $sheet->setCellValue('F' . $x, @$data->provinsi);
+                $sheet->setCellValue('G' . $x, @$data->kode_pos);
+                $sheet->setCellValue('H' . $x, @$data->created_at);
+                $sheet->setCellValue('I' . $x, @$data->updated_at);
+                $x++;
+            }
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($file_path);
+        if (file_exists($file_path)) {
+            $file = file_get_contents($file_path);
+            $res = response($file, 200)->withHeaders(['Content-Type' => 'application/vnd.ms-excel', 'Content-Disposition' => 'attachment;filename="' . $name . '"']);
+            register_shutdown_function('unlink', $file_path);
+            return $res;
+        } else {
+            return response()
+                ->json(['status' => 500, 'datas' => null, 'errors' => ['location_id' => 'download file error']])
+                ->withHeaders([
+                    'Content-Type'          => 'application/json',
+                ])
+                ->setStatusCode(500);
         }
     }
 }
