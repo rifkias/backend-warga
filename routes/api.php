@@ -43,6 +43,7 @@ Route::namespace("Api")->group(function () {
             Route::get('role-permission/get-by-role/{id}', 'RolePermissionController@getByRole');
             Route::apiResource('role-permission', RolePermissionController::class);
             Route::apiResource('user-wilayah', UserWilayahController::class);
+            Route::apiResource('user-group-wilayah', UserGroupWilayahController::class);
         });
     });
 });
