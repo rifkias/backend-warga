@@ -35,7 +35,18 @@ class UserGroupWilayahController extends Controller
             }
 
             if ($request->sort_field && $request->sort_type) {
-                $data = $data->orderBy($request->sort_field, $request->sort_type);
+                $sortType = $request->sort_type;
+                $sortField = $request->sort_field;
+
+                if($sortField == "user_group_code" || $sortField == "user_group_desc"){
+                    $sortField = "user_group_id";
+                }
+
+                if($sortField == "wilayah_name"){
+                    $sortField = "wilayah_id";
+                }
+
+                $data = $data->orderBy($sortField, $sortType);
             }
             if ($request->filled("user_group_id")) {
                 $data = $data->where("user_group_id", $request->user_group_id);

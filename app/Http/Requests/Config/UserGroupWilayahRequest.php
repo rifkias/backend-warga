@@ -32,7 +32,7 @@ class UserGroupWilayahRequest extends FormRequest
                 'exists:user_group,id',
                 Rule::unique("user_group_wilayah")->where(function($query) use($user_group_id,$wilayah_id){
                     return $query->where("user_group_id",$user_group_id)->where("wilayah_id",$wilayah_id);
-                }),
+                })->ignore($this->user_group_wilayah),
             ],
             'wilayah_id'=>['required','exists:wilayah,id'],
         ];
