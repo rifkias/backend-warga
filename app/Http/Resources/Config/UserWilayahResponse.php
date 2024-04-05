@@ -18,7 +18,9 @@ class UserWilayahResponse extends JsonResource
         return [
             "id"=>$this->id,
             'user'=>$this->user,
+            'username'=>$this->user->name,
             'wilayah'=>$this->wilayah,
+            'wilayah_name'=>$this->wilayah->kecamatan." - ".$this->wilayah->rt."/".$this->wilayah->rw,
         ];
     }
 }

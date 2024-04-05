@@ -8,11 +8,14 @@ use App\Models\MasterData\Wilayah;
 use App\Http\Resources\MasterData\WilayahResponse;
 use App\Http\Requests\MasterData\WilayahRequest;
 use App\Http\Controllers\ApiLogController as ApiLog;
-
+use App\Models\Config\UserGroup;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\Writer\Xls;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+
+use App\Models\Config\UserGroupWilayah;
+use App\Models\Config\UserWilayah;
 
 class WilayahController extends Controller
 {
@@ -159,6 +162,8 @@ class WilayahController extends Controller
         $checkPermission    = $this->apiLog->checkPermission(class_basename(get_class($this)), 'pdelete');
         if ($checkPermission) {
             $data = Wilayah::findOrFail($id);
+            UserWilayah::where(['wilayah_id'=>$data->id])->delete();
+            UserGroupWilayah::where(['wilayah_id'=>$data->id])->delete();
             if ($data->delete()) {
                 return (new WilayahResponse($data))
                     ->response()
